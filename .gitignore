@@ -1,0 +1,7 @@
+node_modules/
+.idea/
+jhts_loc_8/js/dist/
+rsync*.json
+*.map
+scratch.js
+
