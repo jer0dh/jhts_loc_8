@@ -120,9 +120,30 @@ gulp.task('script-vendor-minified', function(){
 });
 
 gulp.task('copy:vue', function () {
+    let version = pkg.dependencies.vue.match(/\d+\.\d+\.\d+/)[0];
     return gulp.src(['node_modules/vue/dist/vue.min.js'])
-        .pipe(rename('vue-@' + pkg.dependencies.vue + '.min.js'))
+        .pipe(rename('vue-@' + version + '.min.js'))
         .pipe(gulp.dest(pluginName + '/js/dist/vendor'));
+});
+gulp.task('copy:leaflet', function () {
+    let version = pkg.dependencies.leaflet.match(/\d+\.\d+\.\d+/)[0];
+    return gulp.src(['node_modules/leaflet/dist/**/*']) //already minimized
+        .pipe(gulp.dest(pluginName + '/js/dist/vendor/leaflet@'+version+'/'));
+});
+
+/*gulp.task('copy:leaflet', function () {
+    let version = pkg.dependencies.leaflet.match(/\d+\.\d+\.\d+/)[0];
+    return gulp.src(['node_modules/leaflet/dist/leaflet.js','node_modules/leaflet/dist/leaflet.css']) //already minimized
+        .pipe(rename(function(path) {
+            path.basename = 'leaflet-@' + version;
+        } ))
+        .pipe(gulp.dest(pluginName + '/js/dist/vendor'));
+});*/
+gulp.task('copy', function(done){
+    runSequence(
+        'copy:vue',
+        'copy:leaflet',
+        function(){done()});
 });
 /* 
 'images' looks in the images/src directory which is not in the same tree as the themename.  It creates optimized images
@@ -177,13 +198,13 @@ gulp.task('views', function() {
 /* BE CAREFUL! This config will erase anything on the remote side that is not on the local side.  Make sure you have the right directory! */
 
 
-var remote = require('./rsync-local.json');
+var remote = require('./rsync-jhtech.json');
 gulp.task('deploy', function() {
     return gulp.src(pluginName + '/**')
         .pipe(rsync({
             hostname: remote.hostname,
   //          destination: '~/public_html/wp-content/themes/' + pluginName,
-            destination: '/var/www/public/wp-content/plugins/' + pluginName,
+            destination: remote.destination + pluginName,
             root: pluginName,
             username: remote.username,
             port: remote.port,
@@ -201,7 +222,7 @@ gulp.task('deploy', function() {
 
 
 gulp.task('deploy-other-scripts', function(done) {
-    runSequence('other-scripts', 'script-assets', 'vendorjs', 'script-vendor-minified','copy:vue','deploy', function() { done(); });
+    runSequence('other-scripts', 'script-assets', 'vendorjs', 'script-vendor-minified','views','copy','deploy', function() { done(); });
 });
 
 gulp.task('deploy-styles', function(done) {
@@ -212,9 +233,10 @@ gulp.task('clean-build', function(done) {
     runSequence('other-scripts', 'script-assets', 'vendorjs', 'sortScss','styles', 'deploy', function() { done(); });
 });
 
-gulp.task('default', ['deploy-styles',  'images', 'deploy-other-scripts'], function() {
+gulp.task('default', ['deploy-styles',  'images', 'views', 'deploy-other-scripts'], function() {
     gulp.watch(pluginName + '/**/*.scss', ['deploy-styles']);
     gulp.watch(pluginName +'/js/src/**/*.*', ['deploy-other-scripts']);
+    gulp.watch(pluginName + '/views/**/*', ['deploy-other-scripts']);
     gulp.watch(pluginName + '/**/*.php', ['deploy']);
     gulp.watch('src/images/**.*', ['images']);
 });
