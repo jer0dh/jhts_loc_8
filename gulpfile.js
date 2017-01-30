@@ -194,16 +194,16 @@ gulp.task('views', function() {
         }))
         .pipe(gulp.dest(pluginName + '/views/'))
 });
-/* setup keys so no login or password is required when run */
+
+/* setup ssh keys so no login or password is required when run */
 /* BE CAREFUL! This config will erase anything on the remote side that is not on the local side.  Make sure you have the right directory! */
-
-
 var remote = require('./rsync-jhtech.json');
 gulp.task('deploy', function() {
     return gulp.src(pluginName + '/**')
         .pipe(rsync({
             hostname: remote.hostname,
   //          destination: '~/public_html/wp-content/themes/' + pluginName,
+            // ~/staging/3/wp-content/themes/
             destination: remote.destination + pluginName,
             root: pluginName,
             username: remote.username,
