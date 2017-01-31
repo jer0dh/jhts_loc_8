@@ -32,31 +32,22 @@
           When the Geocode completes - goes to Choice state
         h2 Edit Location
 
-        ul.loc-8-edit-tabs
-            li(v-on:click.prevent='setUiEditTab("address")') Address
-            li(v-on:click.prevent='setUiEditTab("latlong")') Lat-Long
-        .loc-8-edit-tab(v-show='uiEditTab === "address"')
-            label(for="geo_loc_8_address") Address
-            input(type="text" v-model="editLoc.address" name="geo_loc_8_address")
-            label(for="geo_loc_8_address2") Address2
-            input(type="text" v-model="editLoc.address2" name="geo_loc_8_address2")
-            label(for="geo_loc_8_city") City/Town
-            input(type="text" v-model="editLoc.city" name="geo_loc_8_city")
-            label(for="geo_loc_8_state") State/Province/Region
-            input(type="text" v-model="editLoc.state" name="geo_loc_8_state")
-            label(for="geo_loc_8_zip") Zip/Postal Code
-            input(type="text" v-model="editLoc.zip" name="geo_loc_8_zip")
-            label(for="geo_loc_8_country") Country
-            input(type="text" v-model="editLoc.country" name="geo_loc_8_country")
-        .loc-8-edit-tab(v-show='uiEditTab === "latlong"')
+        .loc-8-edit-address
+            ul
+                li(v-for="item in [['address', 'Address'], ['address2', 'Address 2'],['city','City/Town'], ['state', 'State/Province/Region'], ['zip', 'Zip/Postal Code']]")
+                    double-input(v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:name="'geo_loc_8_' + item[0]")
+            label(for="l8country") Country
+            input(type="text" v-model="editLoc.country" id="l8country" name="geo_loc_8_country")
+
+        .loc-8-edit-location
             label(for="geo_loc_8_lat") Latitude
             input(type="text" v-model="editLoc.lat" name="geo_loc_8_lat")
             label(for="geo_loc_8_long") Longitutde
             input(type="text" v-model="editLoc.long" name="geo_loc_8_long")
-        button(v-on:click.prevent="geocode()") Geocode
-        button(v-on:click.prevent="editCancel()") Cancel
-        button(v-on:click.prevent="choiceUseMyAddress()") Use this address without Geocoding
-        #loc-8-spinner(v-show="request") Requesting....
+            button(v-on:click.prevent="geocode()") Geocode
+            button(v-on:click.prevent="editCancel()") Cancel
+            button(v-on:click.prevent="choiceUseMyAddress()") Use this address without Geocoding
+            #loc-8-spinner(v-show="request") Requesting....
 
     #loc-8-choice(v-if='uiState === "choice"')
         //-
@@ -71,6 +62,7 @@
         button(v-on:click.prevent="choiceUseMyAddress()") None but use my address info anyway
         br
         ul
+            map-component(v-bind:loc="results")
             template(v-for='(item, index) in results')
                 li(v-bind:class="{'selected': selected == index}" v-on:click.prevent='choiceSelect(index)')
                     map-component(v-bind:loc="item")

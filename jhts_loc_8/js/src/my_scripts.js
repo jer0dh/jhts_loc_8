@@ -50,41 +50,126 @@
             }]
         }
 
+        // Vue component as a simple bus to pass events between components
+        let bus = new Vue();
+
+//Vue component to allow user to easily switch between address values
+Vue.component('double-input', {
+    template: `<div>
+<span> {{ otherValue }} </span><label v-show="label"> {{ label }}</label>
+            <input
+              ref="input"
+              v-bind:value="value"
+              v-on:input="valueChange($event.target.value)"
+            v-bind:name="name"  />
+<button v-on:click.stop="switchIt()" v-show="canSwitch">Switch</button></div>`,
+    props: {
+        "value2" : {
+            type: String,
+            default: ''
+        },
+        "value" : {
+            type: String,
+            default: ''
+        },
+        "name" : {
+            type: String
+        },
+        "label" : {
+            type: String
+        }
+    },
+    data: function() {
+        return {"otherValue" : '' }
+        //no need to emit value2 which
+        //means it is read only.
+        //so use value2 as initial value of
+        //otherValue
+    },
+    computed: {
+        canSwitch : function() {
+            return this.otherValue !== '';
+        }
+    },
+    mounted: function() {
+        this.otherValue = this.value2;
+    },
+    methods: {
+        valueChange : function(newValue) {
+            this.value = newValue;
+            this.$emit('input', newValue);
+        },
+        switchIt : function() {
+            let tmp = this.value;
+            this.value = this.otherValue;
+            this.otherValue = tmp;
+            this.$emit('input', this.value);
+        }
+    }
+})
 // Vue component to hold the Leaflet Map
 // Pass in the Location object containing the lat and long in props
-        Vue.component('map-component', {
-            template: '<div class="aMap"></div>',
-            props: ['loc'],
-            data: function() {
-                return {
-                    map: {}
-                }
-            },
-            // Initialize map
-            mounted: function() {
-                this.map = L.map(this.$el);
-                L.tileLayer(fwp.mapTileLayer, {
-                    attribution: fwp.mapAttribution,
-                    maxZoom: fwp.mapMaxZoom,
-                    id: fwp.mapAccessId,
-                    accessToken: fwp.mapAccessToken
-                }).addTo(this.map);
-                this.map.setView([this.loc.lat, this.loc.long], 13);
-                let marker = L.marker([this.loc.lat, this.loc.long]).addTo(this.map);
+// Added ability to add an array for multiple markers.  It will emit the
+// index of the location array that was clicked. Using a simple bus
+// Currently does not update the map if lat/long change in the array
+Vue.component('map-component', {
+    template: '<div class="aMap"></div>',
+    props: ['loc'],
+    data: function() {
+        return {
+            map: {},
+            markers: []
+        }
+    },
+    // Initialize map
+    mounted: function() {
+        this.map = L.map(this.$el);
+        L.tileLayer(fwp.mapTileLayer, {
+            attribution: fwp.mapAttribution,
+            maxZoom: fwp.mapMaxZoom,
+            id: fwp.mapAccessId,
+            accessToken: fwp.mapAccessToken
+        }).addTo(this.map);
 
-            },
-            // if Location changes from parent,
-            // update map
-            watch: {
-                'loc': {
-                    deep: true,
-                    handler: function() {
-                        console.log("state changed.  give map new coords:" + this.loc.lat + ',' + this.loc.long);
-                        this.map.setView([this.loc.lat, this.loc.long], 13);
-                        let marker = L.marker([this.loc.lat, this.loc.long]).addTo(this.map);
-                    }
+        if (Array.isArray(this.loc)) {
+            console.log(this.loc);
+            for(let i = 0; i < this.loc.length; i++){
+                let marker = L.marker([this.loc[i].lat, this.loc[i].long])
+                    .addTo(this.map)
+                    .on('click', this.markerClick);
+                marker.loc_8_id = i;
+                this.markers.push( marker );
+            }
+            let group = new L.featureGroup(this.markers);
+            this.map.fitBounds(group.getBounds().pad(0.5));
+        } else {
+            let marker = L.marker([this.loc.lat, this.loc.long]).addTo(this.map);
+            this.markers[0] = marker;
+            this.map.setView([this.loc.lat, this.loc.long], 13);
+        }
+    },
+    methods: {
+        markerClick: function(e) {
+            console.log("emitting" + e.target.loc_8_id);
+            bus.$emit('marker-click', e.target.loc_8_id);
+        }
+    },
+    // if Location changes from parent,
+    // update map
+    watch: {
+        'loc': {
+            deep: true,
+            handler: function() {
+                console.log("a map given new coords");
+                if(Array.isArray(this.loc)) {
+                    //To implement if needed.
+                } else {
+                    this.map.setView([this.loc.lat, this.loc.long], 13);
+                    this.markers[0] = L.marker([this.loc.lat, this.loc.long]).addTo(this.map);
                 }
-            },
+            }
+        }
+    },
 
         });
 
@@ -105,41 +190,56 @@
                 editLoc: {},
                 canEdit: fwp.canEdit,
                 uiState: 'view', //'view, 'edit', 'choice'
-                uiEditTab: 'address', //'address','latlong'
                 request: false,
                 results: [],
                 selected: '',
-
+                labels: []
 
             },
 
             watch: {
 
-            },
+    },
+    mounted: function() {
+        console.log('setting up $on')
+        let that = this;
+        bus.$on('marker-click', function(s) {
+            console.log('in bus.$on:masterClick with ' + s)
+            that.selected = s;
+        });
+        let alpha = "ABCDEFGHIJKLMNOP";
+        this.labels = alpha.split('');
+    },
+    computed: {
+        hasLocation: function() {
+            return this.loc.long && this.loc.lat
+        },
+        editAddressChange : function() {
+            return this.fullAddress(this.loc).toLowercase() !== this.fullAddress(this.editLoc).toLowercase();
+        },
+        editLocationChange: function() {
+            return (this.loc.lat + this.loc.long) !== (this.editLoc.lat + this.editLoc.long);
+        }
 
-            computed: {
-                hasLocation: function() {
-                    return this.loc.long && this.loc.lat
-                },
 
-            },
-            methods: {
-                // View State functions
-                //---------------------------------------------
-                // copies current location to editLoc for user manipulation
-                // and changes to Edit state
-                currentEdit: function() {
-                    this.editLoc = JSON.parse(JSON.stringify(this.loc));
-                    this.uiState = 'edit';
-                },
+    },
+    methods: {
+        // View State functions
+        //---------------------------------------------
+        // copies current location to editLoc for user manipulation
+        // and changes to Edit state
+        currentEdit: function() {
+            this.editLoc = JSON.parse(JSON.stringify(this.loc));
+            this.uiState = 'edit';
+        },
 
-                // Edit State functions
-                //---------------------------------------------
+        // Edit State functions
+        //---------------------------------------------
 
-                // Shows either address edit screen or lat/long edit screen
-                setUiEditTab: function(tab) {
-                    this.uiEditTab = tab;
-                },
+        // Shows either address edit screen or lat/long edit screen
+        setUiEditTab: function(tab) {
+            this.uiEditTab = tab;
+        },
 
                 // Remove pressed so blank out location
                 currentRemove: function() {
