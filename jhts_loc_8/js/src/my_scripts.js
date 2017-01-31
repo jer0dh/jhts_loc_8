@@ -164,7 +164,8 @@ Vue.component('map-component', {
                 if(Array.isArray(this.loc)) {
                     //To implement if needed.
                 } else {
-                    this.map.setView([this.loc.lat, this.loc.long], 13);
+                    this.map.setView([this.loc.lat, this.loc.long], 13)
+                        .removeLayer(this.markers[0]);
                     this.markers[0] = L.marker([this.loc.lat, this.loc.long]).addTo(this.map);
                 }
             }
@@ -192,7 +193,7 @@ Vue.component('map-component', {
                 uiState: 'view', //'view, 'edit', 'choice'
                 request: false,
                 results: [],
-                selected: '',
+                selected: null,
                 labels: []
 
             },
@@ -236,22 +237,26 @@ Vue.component('map-component', {
         // Edit State functions
         //---------------------------------------------
 
-        // Shows either address edit screen or lat/long edit screen
-        setUiEditTab: function(tab) {
-            this.uiEditTab = tab;
-        },
-
                 // Remove pressed so blank out location
                 currentRemove: function() {
                     this.loc = this.blankLocation();
                 },
 
+                // OK pressed so go back to View Stat
+                // Move editLoc to loc
+                // Check to see if address or loc has changed
+                editOk: function() {
+                    this.copyLocation(this.editLoc, this.loc);
+                    this.selected=null;
+                    this.uiState = "view";
+                },
                 // Cancel pressed so go back to View State
                 editCancel: function() {
                     this.uiState = "view";
                 },
 
                 // Will send request to WP to geocode editLoc object
+                // If multiple add a label: A-Z for markers
                 geocode: function() {
                     this.request = true;
                     let that = this;
@@ -291,6 +296,7 @@ Vue.component('map-component', {
                 // and change to View state
                 choiceUseSelected: function() {
                     this.copyLocation(this.results[this.selected], this.loc);
+                    this.selected = null;
                     this.uiState = 'view';
                 },
 
@@ -313,8 +319,8 @@ Vue.component('map-component', {
                     this.loc.city = city;
                     this.loc.zip = zip;
                     this.loc.country = country;
-
-                    this.uiState = "view";
+                    this.copyLocation(this.loc, this.editLoc)
+                    this.uiState = "edit";
                 },
 
                 // If user clicks on address, assign selected to index

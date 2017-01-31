@@ -1,6 +1,6 @@
 #loc-8-component
 
-    #loc-8-view(v-show='uiState==="view"' v-cloak)
+    #loc-8-view(v-if='uiState==="view"')
         //-
           This is the View state
           This will show the current location either from WP
@@ -25,7 +25,7 @@
             template(v-else)
                 button(v-on:click.prevent="") Edit & Geocode
 
-    #loc-8-edit(v-show='uiState==="edit"')
+    #loc-8-edit(v-if='uiState==="edit"')
         //-
           This is the Edit state
           User can input address or Lat/Long and do a geocode search
@@ -35,7 +35,7 @@
         .loc-8-edit-address
             ul
                 li(v-for="item in [['address', 'Address'], ['address2', 'Address 2'],['city','City/Town'], ['state', 'State/Province/Region'], ['zip', 'Zip/Postal Code']]")
-                    double-input(v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:name="'geo_loc_8_' + item[0]")
+                    double-input(v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:value2="(selected===null)?'':results[selected][item[0]]" v-bind:name="'geo_loc_8_' + item[0]")
             label(for="l8country") Country
             input(type="text" v-model="editLoc.country" id="l8country" name="geo_loc_8_country")
 
@@ -44,10 +44,12 @@
             input(type="text" v-model="editLoc.lat" name="geo_loc_8_lat")
             label(for="geo_loc_8_long") Longitutde
             input(type="text" v-model="editLoc.long" name="geo_loc_8_long")
-            button(v-on:click.prevent="geocode()") Geocode
-            button(v-on:click.prevent="editCancel()") Cancel
-            button(v-on:click.prevent="choiceUseMyAddress()") Use this address without Geocoding
-            #loc-8-spinner(v-show="request") Requesting....
+            map-component(v-bind:loc="editLoc")
+        button(v-on:click.prevent="editOk()") OK
+        button(v-on:click.prevent="geocode()") Geocode
+        button(v-on:click.prevent="editCancel()") Cancel
+        button(v-on:click.prevent="choiceUseMyAddress()") Use this address without Geocoding
+        #loc-8-spinner(v-show="request") Requesting....
 
     #loc-8-choice(v-if='uiState === "choice"')
         //-
@@ -65,7 +67,7 @@
             map-component(v-bind:loc="results")
             template(v-for='(item, index) in results')
                 li(v-bind:class="{'selected': selected == index}" v-on:click.prevent='choiceSelect(index)')
-                    map-component(v-bind:loc="item")
+
                     p.loc-8-address {{ fullAddress(item) }}
                     p.loc-8-latlong {{ item.lat + ', ' + item.long }}
 
