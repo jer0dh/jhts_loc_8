@@ -105,13 +105,14 @@ class Jhts_loc_8 {
         }
         $url .= '&' . 'q=' . $return;
         $response = $this->http->get($url);
+        $response['loc8url'] = $url;
         if (is_wp_error($response)){
             wp_send_json_error($response);
             return;
         }
 
         $status = $response['response']['code'];
-        if ( $status !== '200') {
+        if ( strval($status) !== '200') {
             wp_send_json_error(new WP_Error('geocoder_http_request_failed', $status . ': ' . $response['response']['message'], $response));
             return;
         }
@@ -119,18 +120,49 @@ class Jhts_loc_8 {
         $data = json_decode( $response['body'] );
 
         $responseResults = $data->results;
-          if ( empty( $responseResults ) ) {
+/*          if ( empty( $responseResults ) ) {
               wp_send_json_success(array());
               return;
-          }
+          }*/
 
         $results = [];
 
         foreach($responseResults as $result) {
+            $row = [];
+            $res_row = $result->components;
+            if(isset($res_row->road)) {
+                if(isset($res_row->house_number)) {
+                    $row['address'] = $res_row->house_number . ' ' . $res_row->road;
+                } else {
+                    $row['address'] = $res_row->road;
+                }
+            }
+            if(isset($res_row->city) || isset($res_row->town)) {
+                $row['city'] = $res_row->city ? $res_row->city : $res_row->town;
+            }
+            if(isset($res_row->state)) {
+                $row['state'] = $res_row->state;
+            }
+            if(isset($res_row->postcode)) {
+                $row['zip'] = $res_row->postcode;
+            }
+            if(isset($res_row->country_code)) {
+                $row['country'] = $res_row->country_code;
+            }
+            error_log(print_r($res_row, true));
+            if(isset($result->geometry)){
+                if(isset($result->geometry->lat)){
+                    $row['lat'] = $result->geometry->lat;
+                }
+                if(isset($result->geometry->lng)){
+                    $row['long'] = $result->geometry->lng;
+                }
+            }
+            $results[] = $row;
 
         }
 
-        wp_send_json_success( array ("url" => $url, "response" => json_decode( $response['body'] )));
+        wp_send_json_success( array ("url" => $url, "results" => $results, "response" => json_decode( $response['body'] )));
     }
     // returns { success: true, data: Array}
     /**

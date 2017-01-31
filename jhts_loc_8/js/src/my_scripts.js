@@ -62,7 +62,7 @@ Vue.component('double-input', {
               v-bind:value="value"
               v-on:input="valueChange($event.target.value)"
             v-bind:name="name"  />
-<button v-on:click.stop="switchIt()" v-show="canSwitch">Switch</button></div>`,
+<button v-on:click.prevent="switchIt()" v-show="canSwitch">Switch</button></div>`,
     props: {
         "value2" : {
             type: String,
@@ -202,7 +202,8 @@ Vue.component('map-component', {
 
     },
     mounted: function() {
-        console.log('setting up $on')
+        console.log('setting up $on, yo');
+        window.vm = this;
         let that = this;
         bus.$on('marker-click', function(s) {
             console.log('in bus.$on:masterClick with ' + s)
@@ -210,6 +211,7 @@ Vue.component('map-component', {
         });
         let alpha = "ABCDEFGHIJKLMNOP";
         this.labels = alpha.split('');
+
     },
     computed: {
         hasLocation: function() {
@@ -265,6 +267,7 @@ Vue.component('map-component', {
                     $.each($('input[name^=geo_loc_8_]'),function(i,v){data[$(v).attr('name')] = $(v).val()});
                     data['action'] = 'loc_8_geocode';
                     //TODO obtain url and action via localscript
+                    console.log(data);
                     $.ajax('http://staging3.adv.jhtechservices.com/wp-admin/admin-ajax.php',{
                         method: 'POST',
                         data: data ,
@@ -272,6 +275,11 @@ Vue.component('map-component', {
                     } )
                         .done( (results) => {
                             console.log(results);
+                            if(results.data.results.length > 0) {
+                                that.results = results.data.results;
+                                that.uiState = "choice";
+                            }
+
                         })
                         .fail( (error) => {
                             console.log('failed: ' + error);
@@ -375,6 +383,7 @@ Vue.component('map-component', {
             },
 
         });
+
         });
 })(jQuery);
 

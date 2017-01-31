@@ -35,7 +35,7 @@
         .loc-8-edit-address
             ul
                 li(v-for="item in [['address', 'Address'], ['address2', 'Address 2'],['city','City/Town'], ['state', 'State/Province/Region'], ['zip', 'Zip/Postal Code']]")
-                    double-input(v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:value2="(selected===null)?'':results[selected][item[0]]" v-bind:name="'geo_loc_8_' + item[0]")
+                  double-input(v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:value2="(selected===null)?'':results[selected][item[0]]" v-bind:name="'geo_loc_8_' + item[0]")
             label(for="l8country") Country
             input(type="text" v-model="editLoc.country" id="l8country" name="geo_loc_8_country")
 
