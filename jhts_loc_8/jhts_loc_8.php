@@ -73,27 +73,32 @@ class Jhts_loc_8 {
 	    $location = $this->get_location_data($post->ID);
 	    if($location) {
 		    $local_vars['result'] = array(
-		    	'lat'       => esc_textarea($location['lat']),
-			    'long'      => esc_textarea($location['lng']),
-			    'address'   => esc_textarea($location['address']),
-			    'city'      => esc_textarea($location['locality_name']),
-			    'state'     => esc_textarea($location['admin_code']),
-			    'zip'       => esc_textarea($location['postal_code']),
-			    'country'   => esc_textarea($location['country_code'])
+			    'lat'     => esc_textarea( $location['lat'] ),
+			    'long'    => esc_textarea( $location['lng'] ),
+			    'address' => esc_textarea( $location['address'] ),
+			    'city'    => esc_textarea( $location['locality_name'] ),
+			    'state'   => esc_textarea( $location['admin_code'] ),
+			    'zip'     => esc_textarea( $location['postal_code'] ),
+			    'country' => esc_textarea( $location['country_code'] )
 		    );
-		    $local_vars['ajax_url'] = admin_url('admin-ajax.php');
-		    $local_vars['action'] = 'loc_8_geocode';
-		    $local_vars['mapTileLayer']= 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token={accessToken}';
-            $local_vars['mapAttribution'] = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>';
-            $local_vars['mapAccessId']= 'loc_8_wp';
-            $local_vars['mapMaxZoom'] = 18;
-            $local_vars['mapAccessToken'] = 'pk.eyJ1IjoiamVyMGRoIiwiYSI6ImNpeGo3MGRjaTAwNGIyd280ODJ0dzA1bm4ifQ.tFc-Mw0uY6Zf5056W_R5qw';
 	    }
+	    //TODO check capabilities here
+	    $local_vars['canEdit'] = true;
+	    $local_vars['ajax_url'] = admin_url('admin-ajax.php');
+	    $local_vars['action'] = 'loc_8_geocode';
+	    $local_vars['mapTileLayer']= 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token={accessToken}';
+        $local_vars['mapAttribution'] = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>';
+        $local_vars['mapAccessId']= 'loc_8_wp';
+        $local_vars['mapMaxZoom'] = 18;
+        $local_vars['mapAccessToken'] = 'pk.eyJ1IjoiamVyMGRoIiwiYSI6ImNpeGo3MGRjaTAwNGIyd280ODJ0dzA1bm4ifQ.tFc-Mw0uY6Zf5056W_R5qw';
+
         wp_enqueue_script('vuejs', plugins_url( '/js/dist/vendor/vue-@2.1.10.min.js', __FILE__), array(),'1.0.0',true);
         wp_enqueue_script('leafletjs', plugins_url( '/js/dist/vendor/leaflet@1.0.3/leaflet.js', __FILE__), array(),'1.0.0',true);
-        wp_enqueue_script('scripts', plugins_url( '/js/dist/scripts.js', __FILE__), array('jquery','vuejs','leafletjs'),'1.0.0',true);
         wp_enqueue_style('leafletcss', plugins_url('/js/dist/vendor/leaflet@1.0.3/leaflet.css',__FILE__));
         wp_enqueue_style('loc8styles', plugins_url('/css/style.css', __FILE__));
+
+	    wp_enqueue_script('scripts', plugins_url( '/js/dist/scripts.js', __FILE__), array('jquery','vuejs','leafletjs'),'1.0.0',true);
+	    wp_localize_script('scripts', 'loc_8_fwp', $local_vars);
     }
 
 	/**

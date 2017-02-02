@@ -4,21 +4,25 @@
 /* javascript code goes here.  Will run after page is loaded in the DOM */
     $(document).ready(function() {
 // Simulate the data WP will populate on page creation
-        let fwp = {
-            lat: '32.3336368',
-            long: '-95.2930722',
-            address: '1329 S Beckham Ave',
-            address2: '',
-            city: 'Tyler',
-            state: 'TX',
-            zip: '75701',
-            country: 'USA',
+/*        let loc_8_fwp = {
+            result: {
+                lat: '32.3336368',
+                long: '-95.2930722',
+                address: '1329 S Beckham Ave',
+                address2: '',
+                city: 'Tyler',
+                state: 'TX',
+                zip: '75701',
+                country: 'USA'
+            },
             canEdit: true,
             mapTileLayer: 'https://api.mapbox.com/styles/v1/mapbox/streets-v10/tiles/256/{z}/{x}/{y}?access_token={accessToken}',
             mapAttribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
             mapAccessId: 'CodePen',
             mapMaxZoom: 18,
-            mapAccessToken: 'pk.eyJ1IjoiamVyMGRoIiwiYSI6ImNpeGo3MGRjaTAwNGIyd280ODJ0dzA1bm4ifQ.tFc-Mw0uY6Zf5056W_R5qw'
+            mapAccessToken: 'pk.eyJ1IjoiamVyMGRoIiwiYSI6ImNpeGo3MGRjaTAwNGIyd280ODJ0dzA1bm4ifQ.tFc-Mw0uY6Zf5056W_R5qw',
+            action: 'loc_8_geocode',
+            ajax_url: 'http://staging3.adv.jhtechservices.com/wp-admin/admin-ajax.php'
         }
 
 // Simulate a sample result of an Ajax or REST geocode request
@@ -49,7 +53,7 @@
                 country: 'USA'
             }]
         }
-
+ */
         // Vue component as a simple bus to pass events between components
         let bus = new Vue();
 
@@ -124,11 +128,11 @@ Vue.component('map-component', {
     // Initialize map
     mounted: function() {
         this.map = L.map(this.$el);
-        L.tileLayer(fwp.mapTileLayer, {
-            attribution: fwp.mapAttribution,
-            maxZoom: fwp.mapMaxZoom,
-            id: fwp.mapAccessId,
-            accessToken: fwp.mapAccessToken
+        L.tileLayer(loc_8_fwp.mapTileLayer, {
+            attribution: loc_8_fwp.mapAttribution,
+            maxZoom: loc_8_fwp.mapMaxZoom,
+            id: loc_8_fwp.mapAccessId,
+            accessToken: loc_8_fwp.mapAccessToken
         }).addTo(this.map);
 
         if (Array.isArray(this.loc)) {
@@ -179,28 +183,41 @@ Vue.component('map-component', {
             el: '#loc-8-component',
             data: {
                 loc: {
-                    lat: fwp.lat,
-                    long: fwp.long,
-                    address: fwp.address,
-                    address2: fwp.address2,
-                    city: fwp.city,
-                    state: fwp.state,
-                    zip: fwp.zip,
-                    country: fwp.country,
+                    lat: '',
+                    long: '',
+                    address: '',
+                    address2: '',
+                    city: '',
+                    state: '',
+                    zip: '',
+                    country: '',
                 },
                 editLoc: {},
-                canEdit: fwp.canEdit,
+                canEdit: false,
                 uiState: 'view', //'view, 'edit', 'choice'
                 request: false,
                 results: [],
                 selected: null,
-                labels: []
+                labels: [],
+                action: null,
+                ajax_url: null
+
 
             },
 
             watch: {
 
-    },
+            },
+    created: function() {
+                if(typeof(loc_8_fwp) !== 'undefined') {
+                    this.canEdit = loc_8_fwp.canEdit;
+                    if (typeof(loc_8_fwp.result) !== 'undefined') {
+                        this.copyLocation(loc_8_fwp.result, this.loc)
+                    }
+                    this.ajax_url = loc_8_fwp.ajax_url;
+                    this.action = loc_8_fwp.action;
+                }
+            },
     mounted: function() {
         console.log('setting up $on, yo');
         window.vm = this;
@@ -265,10 +282,10 @@ Vue.component('map-component', {
                     //Get the inputs for this component
                     let data = {};
                     $.each($('input[name^=geo_loc_8_]'),function(i,v){data[$(v).attr('name')] = $(v).val()});
-                    data['action'] = 'loc_8_geocode';
+                    data['action'] = this.action;
                     //TODO obtain url and action via localscript
                     console.log(data);
-                    $.ajax('http://staging3.adv.jhtechservices.com/wp-admin/admin-ajax.php',{
+                    $.ajax(this.ajax_url,{
                         method: 'POST',
                         data: data ,
 
