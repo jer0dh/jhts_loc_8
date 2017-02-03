@@ -1,5 +1,5 @@
 #loc-8-component
-
+    p Address changed: {{addressChanged}} | Address deleted: {{addressDeleted}}
     #loc-8-view(v-if='uiState==="view"')
         //-
           This is the View state
@@ -85,3 +85,5 @@
         input(type="hidden" v-model="loc.state" name="loc-8-state")
         input(type="hidden" v-model="loc.zip" name="loc-8-zip")
         input(type="hidden" v-model="loc.country" name="loc-8-country")
+        input(type="hidden" v-model="addressChanged" name="loc-8-changed")
+        input(type="hidden" v-model="addressDeleted" name="loc-8-deleted")

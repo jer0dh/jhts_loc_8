@@ -91,6 +91,7 @@ class Jhts_loc_8 {
         $local_vars['mapAccessId']= 'loc_8_wp';
         $local_vars['mapMaxZoom'] = 18;
         $local_vars['mapAccessToken'] = 'pk.eyJ1IjoiamVyMGRoIiwiYSI6ImNpeGo3MGRjaTAwNGIyd280ODJ0dzA1bm4ifQ.tFc-Mw0uY6Zf5056W_R5qw';
+	    $local_vars['_ajax_nonce'] = wp_create_nonce('loc-8-ajax');
 
         wp_enqueue_script('vuejs', plugins_url( '/js/dist/vendor/vue-@2.1.10.min.js', __FILE__), array(),'1.0.0',true);
         wp_enqueue_script('leafletjs', plugins_url( '/js/dist/vendor/leaflet@1.0.3/leaflet.js', __FILE__), array(),'1.0.0',true);
@@ -142,21 +143,25 @@ class Jhts_loc_8 {
 
     //output of our Loc-8 meta box
     public function loc_8_meta_box() {
-        wp_nonce_field(basename(__FILE__), 'loc-8-nonce');
+	    global $post_id;
+	    error_log($post_id);
+        wp_nonce_field('loc-8-', 'loc-8-nonce');
         include('views/loc-8-component.html');
     }
 
     public function ajax_loc_8_geocode()
     {
-        //TODO in myscripts - grab inputs and POST to this endpoint
-        //TODO check nonce
+
         //TODO logging API errors
         $prefix = 'geo_loc_8_';
+
+	    // Check nonce.  Will die() if nonce is incorrect.
+		check_ajax_referer('loc-8-ajax');
 
         $url = 'http://api.opencagedata.com/geocode/v1/json?no_annotations=1&min_confidence=9&limit=' . $this->max_results .
             '&key=' . $this->api_key;
 
-        $loc = array('address' => '', 'city' => '', 'state' => '', 'country' => '');
+        $loc = array('address' => '', 'city' => '', 'state' => '');
         $return = '';
         foreach ($loc as $field => $value) {
             if (isset($_POST[$prefix . $field])) {
@@ -164,14 +169,16 @@ class Jhts_loc_8 {
                 $return .= $loc[$field] . '%2C';
             }
         }
-        $url .= '&' . 'q=' . $return;
+        if(isset($_POST[$prefix . 'country'])) {
+	        $url .= '&countrycode=' . $_POST[$prefix . 'country'];
+        }
+        $url .= '&q=' . $return;
         $response = $this->http->get($url);
-        $response['loc8url'] = $url;
         if (is_wp_error($response)){
             wp_send_json_error($response);
             return;
         }
-
+	    $response['loc8url'] = $url;
         $status = $response['response']['code'];
         if ( strval($status) !== '200') {
             wp_send_json_error(new WP_Error('geocoder_http_request_failed', $status . ': ' . $response['response']['message'], $response));
@@ -199,7 +206,7 @@ class Jhts_loc_8 {
                 }
             }
             if(isset($res_row->city) || isset($res_row->town)) {
-                $row['city'] = $res_row->city ? $res_row->city : $res_row->town;
+                $row['city'] = isset($res_row->city) ? $res_row->city : $res_row->town;
             }
             if(isset($res_row->state)) {
                 $row['state'] = $res_row->state;
@@ -236,33 +243,64 @@ class Jhts_loc_8 {
 			return;
 		}
 		error_log('In loc 8 save post method');
+		error_log(print_r($_POST, true));
 
-		//TODO Check nonces and capabilities
+		if(! isset($_POST['loc-8-nonce']) || ! wp_verify_nonce($_POST['loc-8-nonce'], 'loc-8-')) {
+			die();
+		}
 
 		//TODO Check for loc8_geo_date in POST
 		$geo_date = date( 'Y-m-d H:i:s' );
+		if($_POST['loc-8-changed'] === 'true' || $_POST['loc-8-deleted'] === 'true') {
 
-		$post_location = [];
-		$post_location['lat'] = sanitize_text_field($_POST['loc-8-lat']);
-		$post_location['lng'] = sanitize_text_field($_POST['loc-8-long']);
-		$post_location['address'] = sanitize_text_field($_POST['loc-8-address']);
-		$post_location['locality_name'] = sanitize_text_field($_POST['loc-8-city']);
-		$post_location['admin_code'] = sanitize_text_field($_POST['loc-8-state']);
-		$post_location['postal_code'] = sanitize_text_field($_POST['loc-8-zip']);
-		$post_location['country_code'] = sanitize_text_field($_POST['loc-8-country']);
+			if( $_POST['loc-8-deleted'] === 'true') {
+				error_log('deleting location');
+				$error = GeoMashupDB::delete_object_location( 'post', $post_id );
+				if ( is_wp_error( $error ) ) {
+					error_log( 'error deleting in loc-8 save_post' );
+					error_log( $error->get_error_message() );
+					update_post_meta( $post_id, 'geo_mashup_save_location_error', $error->get_error_message() );
+					return;
+				}
+				delete_post_meta( $post_id, 'loc-8-address' );
+				delete_post_meta( $post_id, 'loc-8-address2' );
+				delete_post_meta( $post_id, 'loc-8-city');
+				delete_post_meta( $post_id, 'loc-8-state' );
+				delete_post_meta( $post_id, 'loc-8-zip' );
+				delete_post_meta( $post_id, 'loc-8-country');
 
-		//TODO save custom fields to post
+			} else {
 
+				$post_location = [];
+				$post_location['lat'] = sanitize_text_field($_POST['loc-8-lat']);
+				$post_location['lng'] = sanitize_text_field($_POST['loc-8-long']);
+				$post_location['address'] = sanitize_text_field($_POST['loc-8-address']);
+				$post_location['locality_name'] = sanitize_text_field($_POST['loc-8-city']);
+				$post_location['admin_code'] = sanitize_text_field($_POST['loc-8-state']);
+				$post_location['postal_code'] = sanitize_text_field($_POST['loc-8-zip']);
+				$post_location['country_code'] = sanitize_text_field($_POST['loc-8-country']);
+				
+				// Update post meta
+				update_post_meta( $post_id, 'loc-8-address', $post_location['address'] );
+				update_post_meta( $post_id, 'loc-8-address2', (isset($_POST['loc-8-address2']))? sanitize_text_field($_POST['loc-8-address2']) : '' );
+				update_post_meta( $post_id, 'loc-8-city', $post_location['locality_name'] );
+				update_post_meta( $post_id, 'loc-8-state', $post_location['admin_code'] );
+				update_post_meta( $post_id, 'loc-8-zip', $post_location['postal_code'] );
+				update_post_meta( $post_id, 'loc-8-country', $post_location['country_code'] );
 
-		$location_id = GeoMashupDB::set_object_location( 'post', $post_id, $post_location, true, $geo_date );
-		if ( is_wp_error( $location_id ) ) {
-			error_log("error saving: ");
-			error_log(print_r($location_id, true));
+				$location_id = GeoMashupDB::set_object_location( 'post', $post_id, $post_location, true, $geo_date );
+				
+				if ( is_wp_error( $location_id ) ) {
+					error_log("error saving: ");
+					error_log(print_r($location_id, true));
+					update_post_meta( $post_id, 'geo_mashup_save_location_error', $location_id->get_error_message() );
+					return;
+				}
 
-			update_post_meta( $post_id, 'geo_mashup_save_location_error', $location_id->get_error_message() );
+				return;
+			}
 		}
 
-		return true;
 	}
 
 

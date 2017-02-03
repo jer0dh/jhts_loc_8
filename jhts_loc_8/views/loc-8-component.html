@@ -1,5 +1,6 @@
 
 <div id="loc-8-component">
+  <p>Address changed: {{addressChanged}} | Address deleted: {{addressDeleted}}</p>
   <div id="loc-8-view" v-if="uiState===&quot;view&quot;">
     <template v-if="hasLocation">
       <h2>Current Location</h2>
@@ -76,5 +77,7 @@
     <input type="hidden" v-model="loc.state" name="loc-8-state"/>
     <input type="hidden" v-model="loc.zip" name="loc-8-zip"/>
     <input type="hidden" v-model="loc.country" name="loc-8-country"/>
+    <input type="hidden" v-model="addressChanged" name="loc-8-changed"/>
+    <input type="hidden" v-model="addressDeleted" name="loc-8-deleted"/>
   </div>
 </div>
