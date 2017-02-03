@@ -60,14 +60,14 @@
 
 //Vue component to allow user to easily switch between address values
         Vue.component('double-input', {
-            template: `<div>
-<span> {{ otherValue }} </span><label v-show="label"> {{ label }}</label>
+            template: `<div class="double-input">
+<label v-show="label"> {{ label }} <span v-if="(otherValue !== '') && (otherValue !== value)"> {{ otherValue }} <button v-on:click.prevent="switchIt()" v-show="canSwitch">Switch</button></span></label>
             <input
               ref="input"
               v-bind:value="value"
               v-on:input="valueChange($event.target.value)"
             v-bind:name="name"  />
-<button v-on:click.prevent="switchIt()" v-show="canSwitch">Switch</button></div>`,
+</div>`,
             props: {
                 "value2" : {
                     type: String,
@@ -295,7 +295,6 @@
                     $.each($('input[name^=geo_loc_8_]'),function(i,v){data[$(v).attr('name')] = $(v).val()});
                     data['action'] = this.action;
                     data['_ajax_nonce'] = this.ajax_nonce;
-                    //TODO obtain url and action via localscript
                     console.log(data);
                     $.ajax(this.ajax_url,{
                         method: 'POST',
@@ -320,7 +319,7 @@
                     /*                    setTimeout(
                      function() {
                      that.request = false;
-                     that.results = fwpResults.results;
+                    that.results = fwpResults.results.map(function(e,i){ e.label = that.labels[i]; return e;});
                      that.uiState = 'choice';
                      that.selected = null;
                      }, 500);*/

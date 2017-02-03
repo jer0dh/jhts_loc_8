@@ -1,72 +1,83 @@
 
 <div id="loc-8-component">
-  <p>Address changed: {{addressChanged}} | Address deleted: {{addressDeleted}}</p>
-  <div id="loc-8-view" v-if="uiState===&quot;view&quot;">
-    <template v-if="hasLocation">
-      <h2>Current Location</h2>
-      <map-component v-bind:loc="loc"></map-component>
-    </template>
-    <template v-else="v-else">
-      <h2>Address Only</h2>
-    </template>
-    <tempate v-if="hasLocation || fullAddress(loc) !== &quot;&quot;">
-      <p class="l8-address">{{ fullAddress(loc) }}</p>
-      <p class="l8-latlong" v-if="hasLocation">({{ loc.lat + ', ' + loc.long }})</p>
-    </tempate>
-    <template v-else="v-else">
-      <p class="l8-address">No Location</p>
-    </template>
-    <template v-if="canEdit">
+  <div class="row" id="loc-8-view" v-if="uiState===&quot;view&quot;">
+    <div class="one-half first">
       <template v-if="hasLocation">
-        <button v-on:click.prevent="currentEdit()">Edit</button>
-        <button v-on:click.prevent="currentRemove()">Remove</button>
-      </template>
-      <template v-else-if="!hasLocation &amp;&amp; fullAddress(loc) === &quot;&quot;">
-        <button v-on:click.prevent="currentEdit()">Add</button>
+        <h2>Current Location</h2>
       </template>
       <template v-else="v-else">
-        <button v-on:click.prevent="">Edit & Geocode</button>
+        <h2>Address Only</h2>
       </template>
-    </template>
+      <tempate v-if="hasLocation || fullAddress(loc) !== &quot;&quot;">
+        <p class="l8-address">{{ fullAddress(loc) }}</p>
+        <p class="l8-latlong" v-if="hasLocation">({{ loc.lat + ', ' + loc.long }})</p>
+      </tempate>
+      <template v-else="v-else">
+        <p class="l8-address">No Location</p>
+      </template>
+      <template v-if="canEdit">
+        <template v-if="hasLocation">
+          <button v-on:click.prevent="currentEdit()">Edit</button>
+          <button v-on:click.prevent="currentRemove()">Remove</button>
+        </template>
+        <template v-else-if="!hasLocation &amp;&amp; fullAddress(loc) === &quot;&quot;">
+          <button v-on:click.prevent="currentEdit()">Add</button>
+        </template>
+        <template v-else="v-else">
+          <button v-on:click.prevent="">Edit & Geocode</button>
+        </template>
+      </template>
+    </div>
+    <div class="one-half">
+      <template v-if="hasLocation">
+        <map-component v-bind:loc="loc"></map-component>
+      </template>
+    </div>
   </div>
-  <div id="loc-8-edit" v-if="uiState===&quot;edit&quot;">
-    <h2>Edit Location</h2>
-    <div class="loc-8-edit-address">
+  <div class="row" id="loc-8-edit" v-if="uiState===&quot;edit&quot;">
+    <div class="one-half">
+      <h2>Edit Location</h2>
+      <div class="loc-8-edit-address">
+        <ul>
+          <li v-for="item in [['address', 'Address'], ['address2', 'Address 2'],['city','City/Town'], ['state', 'State/Province/Region'], ['zip', 'Zip/Postal Code']]">
+            <double-input v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:value2="(selected===null)?'':results[selected][item[0]]" v-bind:name="'geo_loc_8_' + item[0]"></double-input>
+          </li>
+        </ul>
+        <label for="l8country">Country</label>
+        <input type="text" v-model="editLoc.country" id="l8country" name="geo_loc_8_country"/>
+      </div>
+      <div class="loc-8-edit-location">
+        <label for="geo_loc_8_lat">Latitude</label>
+        <input type="text" v-model="editLoc.lat" name="geo_loc_8_lat"/>
+        <label for="geo_loc_8_long">Longitutde</label>
+        <input type="text" v-model="editLoc.long" name="geo_loc_8_long"/>
+      </div>
+      <button v-on:click.prevent="editOk()">OK</button>
+      <button v-on:click.prevent="geocode()">Geocode</button>
+      <button v-on:click.prevent="editCancel()">Cancel</button>
+      <button v-on:click.prevent="choiceUseMyAddress()">Use this address without Geocoding</button>
+      <div id="loc-8-spinner" v-show="request">Requesting....</div>
+    </div>
+    <div class="one-half">
+      <map-component v-bind:loc="editLoc" key="loc-8-edit"></map-component>
+    </div>
+  </div>
+  <div class="row" id="loc-8-choice" v-if="uiState === &quot;choice&quot;">
+    <div class="one-half">
       <ul>
-        <li v-for="item in [['address', 'Address'], ['address2', 'Address 2'],['city','City/Town'], ['state', 'State/Province/Region'], ['zip', 'Zip/Postal Code']]">
-          <double-input v-model="editLoc[item[0]]" v-bind:label="item[1]" v-bind:value2="(selected===null)?'':results[selected][item[0]]" v-bind:name="'geo_loc_8_' + item[0]"></double-input>
-        </li>
-      </ul>
-      <label for="l8country">Country</label>
-      <input type="text" v-model="editLoc.country" id="l8country" name="geo_loc_8_country"/>
-    </div>
-    <div class="loc-8-edit-location">
-      <label for="geo_loc_8_lat">Latitude</label>
-      <input type="text" v-model="editLoc.lat" name="geo_loc_8_lat"/>
-      <label for="geo_loc_8_long">Longitutde</label>
-      <input type="text" v-model="editLoc.long" name="geo_loc_8_long"/>
-      <map-component v-bind:loc="editLoc"></map-component>
-    </div>
-    <button v-on:click.prevent="editOk()">OK</button>
-    <button v-on:click.prevent="geocode()">Geocode</button>
-    <button v-on:click.prevent="editCancel()">Cancel</button>
-    <button v-on:click.prevent="choiceUseMyAddress()">Use this address without Geocoding</button>
-    <div id="loc-8-spinner" v-show="request">Requesting....</div>
-  </div>
-  <div id="loc-8-choice" v-if="uiState === &quot;choice&quot;">
-    <button v-show="selected != null" v-on:click.prevent="choiceUseSelected()">Use Selected</button>
-    <button v-show="selected != null" v-on:click.prevent="choiceUseSelectedLocation()">Use Selected for Location but keep my address info</button>
-    <button v-on:click.prevent="uiState=&quot;edit&quot;">None of these, Search again</button>
-    <button v-on:click.prevent="choiceUseMyAddress()">None but use my address info anyway</button><br/>
-    <ul>
-      <map-component v-bind:loc="results"></map-component>
-      <template v-for="(item, index) in results">
-        <li v-bind:class="{'selected': selected == index}" v-on:click.prevent="choiceSelect(index)">
+        <li v-for="(item, index) in results" v-bind:class="{'selected': selected == index}" v-on:click.prevent="choiceSelect(index)">
           <p class="loc-8-address">{{ fullAddress(item) }}</p>
           <p class="loc-8-latlong">{{ item.lat + ', ' + item.long }}</p>
         </li>
-      </template>
-    </ul>
+      </ul>
+      <button v-show="selected != null" v-on:click.prevent="choiceUseSelected()">Use Selected</button>
+      <button v-show="selected != null" v-on:click.prevent="choiceUseSelectedLocation()">Use Selected for Location but keep my address info</button>
+      <button v-on:click.prevent="uiState=&quot;edit&quot;">None of these, Search again</button>
+      <button v-on:click.prevent="choiceUseMyAddress()">None but use my address info anyway</button>
+    </div>
+    <div class="one-half">
+      <map-component v-bind:loc="results" key="loc-8-choice"></map-component>
+    </div>
   </div>
   <div id="loc-8-post-inputs">
     <input type="hidden" v-model="loc.lat" name="loc-8-lat"/>

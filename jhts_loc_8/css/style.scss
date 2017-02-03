@@ -13,6 +13,76 @@
 */
 
 .aMap {
-  width: 200px;
-  height: 200px;
+  min-height: 280px;
+  width: 100%;
+}
+
+#loc-8-component .row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+}
+#loc-8-component .one-half {
+  min-width: 35rem;
+  width: 45%;
+
+}
+.loc-8-edit-tabs li {
+  display: inline-block;
+  padding: 5px;
+  font-weight :bold;
+  cursor: pointer;
+
+}
+#loc-8-component ul, #loc-8-component li {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+#loc-8-choice li {
+  cursor: pointer;
+
+}
+
+#loc-8-choice .selected {
+  border: 1px solid #000;
+}
+
+.double-input {
+  margin-top: 1rem;
+}
+
+.double-input span {
+  font-size: 1rem;
+}
+.double-input span:before {
+  content: "(Prev:";
+  font-weight: 800;
+}
+.double-input span:after {
+  content: ")";
+}
+.double-input label {
+  display: block;
+}
+#loc-8-choice ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+#loc-8-choice li {
+  padding: 1rem;
+  width: 90%;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+#loc-8-choice li:nth-child(2n+1) {
+  background: #eee;
+}
+#loc-8-choice li:hover {
+  background: #ccc;
 }
