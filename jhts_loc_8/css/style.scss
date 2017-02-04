@@ -25,9 +25,13 @@
   padding: 3rem;
 }
 #loc-8-component .one-half {
-  min-width: 35rem;
+  padding: 1rem;
   width: 45%;
-
+}
+@media screen and (max-width: 600px){
+  #loc-8-component .one-half {
+    width: 100%;
+  }
 }
 .loc-8-edit-tabs li {
   display: inline-block;

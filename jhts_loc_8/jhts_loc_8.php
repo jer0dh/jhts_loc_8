@@ -79,7 +79,9 @@ class Jhts_loc_8 {
 			    'city'    => esc_textarea( $location['locality_name'] ),
 			    'state'   => esc_textarea( $location['admin_code'] ),
 			    'zip'     => esc_textarea( $location['postal_code'] ),
-			    'country' => esc_textarea( $location['country_code'] )
+			    'country' => esc_textarea( $location['country_code'] ),
+
+			    'address2' => esc_textarea( get_post_meta( $post->ID, 'loc-8-address2') )
 		    );
 	    }
 	    //TODO check capabilities here
@@ -243,9 +245,9 @@ class Jhts_loc_8 {
 			return;
 		}
 		error_log('In loc 8 save post method');
-		error_log(print_r($_POST, true));
 
-		if(! isset($_POST['loc-8-nonce']) || ! wp_verify_nonce($_POST['loc-8-nonce'], 'loc-8-')) {
+
+		if(! isset($_POST['loc-8-nonce']) || ! wp_verify_nonce($_POST['loc-8-nonce'], 'loc-8-') || ! current_user_can( 'edit_post', $post_id)) {
 			die();
 		}
 
