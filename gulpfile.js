@@ -197,7 +197,7 @@ gulp.task('views', function() {
 
 /* setup ssh keys so no login or password is required when run */
 /* BE CAREFUL! This config will erase anything on the remote side that is not on the local side.  Make sure you have the right directory! */
-var remote = require('./rsync-jhtech.json');
+var remote = require('./rsync-local.json');
 gulp.task('deploy', function() {
     return gulp.src(pluginName + '/**')
         .pipe(rsync({

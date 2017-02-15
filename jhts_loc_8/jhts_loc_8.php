@@ -339,7 +339,15 @@ class Jhts_loc_8 {
 
 	}
 
+	/**
+	 * to_geo_mashup_location()
+	 * @param $location - an array with location using this plugin's keys
+	 *
+	 * @uses $geo_mashup_map to map this plugin's keys to the geo-mashup keys
+	 * @return array with the location using geo-mashup's keys
+	 */
 	protected function to_geo_mashup_location( $location ) {
+
 		$geo_location = array();
 		foreach ( self::$geo_mashup_map as $key => $value ) {
 			if ( isset( $location[ $key ] ) ) {
@@ -350,6 +358,12 @@ class Jhts_loc_8 {
 		return $geo_location;
 	}
 
+	/**
+	 * @param $geo_location - an array with the location using geo-mashup keys
+	 *
+	 * @uses $geo_mashup_map to map this plugin's keys to the geo-mashup keys
+	 * @return array with the location using this plugin's keys
+	 */
 	protected function from_geo_mashup_location( $geo_location ) {
 		$location = array();
 		foreach ( self::$geo_mashup_map as $key => $value ) {
