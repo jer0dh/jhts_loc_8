@@ -45,7 +45,7 @@ class Jhts_loc_8 {
 		'address2',
 		'geo_date'
 	);
-	protected static $loc_8_ns = 'loc_8_';
+	public static $loc_8_ns = 'loc_8_';
 
 	public static function get_instance() {
 		// create an object
@@ -311,11 +311,9 @@ class Jhts_loc_8 {
 			return;
 		}
 
-
 		//TODO Check for loc8_geo_date in POST
 		$geo_date = date( 'Y-m-d H:i:s' );
 		if ( $_POST['loc-8-changed'] === 'true' || $_POST['loc-8-deleted'] === 'true' ) {
-
 			if ( $_POST['loc-8-deleted'] === 'true' ) {
 				error_log( 'deleting location' );
 				$this->delete_location( $post_id );
